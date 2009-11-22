@@ -4,6 +4,15 @@
 #include <time.h>
 #include <stdio.h>
 
+
+/* Note: This is code originally written by Alan Rogers to translate
+SMA relative pad positions (to pad 1) into Earth Centered, Earth Fixed
+(ECEF) coordinates. I believe an accurate GPS position was found for
+pad 1 and then converted to ECEF for use in this program, e.g. the 
+function latlon2xyz is called but never actually used (its output
+is overwritten with pre-calculated values). */
+
+
 #define PI 3.1415926536
 void latlon2xyz(double,double,double,double*,double*,double*);
 
