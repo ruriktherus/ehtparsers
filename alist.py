@@ -184,7 +184,13 @@ class AList:
 
     def __init__(self, OBJ):
         self.data = []
-        self.combine(OBJ)
+        if isinstance(OBJ, file):
+            self.parse(OBJ)
+        else:
+            try:
+                data = list(OBJ)
+            except TypeError:
+                self.data += data
 
     def __len__(self):
         return len(self.data)
@@ -211,13 +217,14 @@ class AList:
         else:
             print "AList addition only supported for AList instances"
 
+    def parse(self, OBJ):
+        for entry in reader(OBJ, delimiter=' ', skipinitialspace=True):
+            self.data.append(AScan(entry))
+
     def combine(self, OBJ):
         obj_type = type(OBJ)
         if obj_type == list:
             self.data += OBJ
-        elif obj_type == file:
-            for entry in reader(OBJ, delimiter=' ', skipinitialspace=True):
-                self.data.append(AScan(entry))
         elif isinstance(OBJ, AList):
             print "Please use AList addition to combine ALists"
             self.data += OBJ.data

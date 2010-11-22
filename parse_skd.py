@@ -15,7 +15,7 @@ SCAN_RE = r"""scan\ (?P<name>\w+);\n          # scan specifier
                \ +start=(?P<time>\w+);        # start time
               \ mode=(?P<mode>\w+);           # freq. def used
               \ source=(?P<source>.+);\n      # source name
-              (?:\*.+\n)?^.+;\n ^.+;\n        # skips two (or three) lines
+              (?:\*.+\n)?(?:^.+;\n){0,3}      # skips two (or three) lines
               endscan;$"""
 
 def parse_skd(FILE, debug=False):
