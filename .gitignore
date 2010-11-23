@@ -1,0 +1,5 @@
+*.skd
+*.alist
+*.tsys
+*.pyc
+*.*~
