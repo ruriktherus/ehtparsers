@@ -3,6 +3,7 @@
 
 import re
 import time
+from datetime import datetime
 
 
 TIME_FMT = '%Yy%jd%Hh%Mm%Ss'
@@ -15,7 +16,7 @@ SCAN_RE = r"""scan\ (?P<name>\w+);\n          # scan specifier
                \ +start=(?P<time>\w+);        # start time
               \ mode=(?P<mode>\w+);           # freq. def used
               \ source=(?P<source>.+);\n      # source name
-              (?:\*.+\n)?(?:^.+;\n){0,3}      # skips two (or three) lines
+              (?:\*.+\n)?(?:^.+;\n){0,3}       # skips two (or three) lines
               endscan;$"""
 
 def parse_skd(FILE, debug=False):
@@ -25,8 +26,10 @@ def parse_skd(FILE, debug=False):
     for match in ITER:
         SCAN = match.groupdict()
         SCAN['pant'] = [int(a) for a in SCAN['pant']]
+        SCAN['pants'] = len(SCAN['pant'])
         SCAN['comp'] = int(SCAN['comp'][0])
         SCAN['conf'] = list(SCAN['conf'].upper())
+        SCAN['datetime'] = datetime.strptime(SCAN['time'], TIME_FMT)
         SCAN['time'] = time.asctime(\
             time.strptime(SCAN['time'], TIME_FMT))
         SCANS.append(SCAN)
