@@ -46,6 +46,31 @@ class FieldNotFoundError(AbstractScanError):
         AbstractScanError.__init__(self, "entry '{scan}' lacks a value for '{field}'",
                                    scan=scan, field=field)
 
+class AttributeCannotBeSetError(AbstractScanError, AttributeError):
+
+    def __init__(self, attr):
+        AbstractScanError.__init__(self, "attribute '{attr}' cannot be set, it would mask "
+                                   "a field of the same name!", attr=attr)
+
+
+class CannotMergeError(AbstractScanError):
+
+    def __init__(self, msg, **kwargs):
+        AbstractScanError.__init__(self, msg, **kwargs)
+
+class DifferentScansError(CannotMergeError):
+
+    def __init__(self, scana, scanb):
+        CannotMergeError.__init__(self, "scans '{scana}' and '{scanb}' cannot be merged, "
+                                  "check that they share a pivot!", scana=scana, scanb=scanb)
+
+class ConflictingValuesError(CannotMergeError):
+
+    def __init__(self, scana, scanb, field):
+        CannotMergeError.__init__(self, "scans '{scana}' and '{scanb}' have different "
+                                  "values for '{field}'!", scana=scana, scanb=scanb,
+                                  field=field)
+
 
 class DataOverriddenError(Error):
 

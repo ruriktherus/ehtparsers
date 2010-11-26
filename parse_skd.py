@@ -9,7 +9,7 @@ from datetime import datetime
 TIME_FMT = '%Yy%jd%Hh%Mm%Ss'
 
 
-SCAN_RE = r"""scan\ (?P<name>\w+);\n          # scan specifier
+SCAN_RE = r"""scan\ (?P<scan>\w+);\n          # scan specifier
               \*.+\n\*\ +(?P<pant>[1-8]*)     # get the PA antenna
               (?P<conf>[dDfFwWaApP]*)         # get the configuration
               \(x\)(?P<comp>[0-9]).+\n             # get the comp. antenna
@@ -34,7 +34,7 @@ def parse_skd(FILE, debug=False):
             time.strptime(SCAN['time'], TIME_FMT))
         SCANS.append(SCAN)
         if debug:
-            print "FOUND SCAN", SCAN['name']
+            print "FOUND SCAN", SCAN['scan']
             print "  PA ANT", SCAN['pant']
             print "  COMP ANT", SCAN['comp']
             print "  CONFIG", ''.join(SCAN['conf'])

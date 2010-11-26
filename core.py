@@ -4,20 +4,33 @@ from errors import *
 
 class AbstractRepr:
 
-    def __init__(self, repr_format="<{name}>", **kwargs):
+    def __init__(self, repr_format="<{name}>"):
         self.name = self.__class__.__name__
         self.repr_format = repr_format
 
     def __repr__(self):
-        return self.repr_format.format(**self.__dict__)
+        repr_dict = dict(self.__dict__, **self)
+        return self.repr_format.format(**repr_dict)
 
 
 class AbstractScan(AbstractRepr, dict):
 
-    def __init__(self, dict_, **kwargs):
-        dict.__init__(self, dict_, **kwargs)
-        AbstractRepr.__init__(self, **kwargs)
-        self.__dict__.update(self)
+    def __init__(self, dict_, pivot, repr_format="<{name}>"):
+        self.pivot = pivot
+        dict.__init__(self, dict_)
+        AbstractRepr.__init__(self, repr_format=repr_format)
+
+    def __getattr__(self, attr):
+        try:
+            return dict.__getitem__(self, attr)
+        except KeyError:
+            raise FieldNotFoundError(self, attr)
+
+    def __setattr__(self, attr, value):
+        if not dict.has_key(self, attr):
+            dict.__setattr__(self, attr, value)
+        else:
+            raise AttributeCannotBeSetError(attr)
 
     def __eq__(self, other):
         """ inst == other -> bool
@@ -27,20 +40,30 @@ class AbstractScan(AbstractRepr, dict):
                self.get(self.pivot) == other.get(other.pivot)
 
     def __add__(self, other):
-        if self == other:
-            return self.merge(other)
-        else:
-            raise PivotError, 'Operands do not share a pivot!'
+        return self.merge(other)
 
     def merge(self, other):
-        return self
+        """ inst.merge(other) -> new_inst
+        Attempts to merge two scans that have the same
+        pivot value (generally scans occurring at the same
+        time. This involves comparing all shared fields and
+        raising errors on conflicts. """ 
+        if self == other:
+            for field, value in other.iteritems():
+                if dict.has_key(self, field) and \
+                       dict.__getitem__(self, field) != value:
+                    raise ConflictingValuesError(self, other, field)
+            return AbstractScan(dict(self, **other), pivot=self.pivot,
+                                repr_format=self.repr_format)
+        else:
+            raise DifferentScansError(self, other)
 
 
 class AbstractList(AbstractRepr, dict):
 
-    def __init__(self, list_, **kwargs):
-        dict.__init__(self, self._scancheck(list_), **kwargs)
-        AbstractRepr.__init__(self, repr_format="[{name}]", **kwargs)
+    def __init__(self, list_):
+        dict.__init__(self, self._scancheck(list_))
+        AbstractRepr.__init__(self, repr_format="[{name}]")
         if self.__len__() != len(list_):
             raise DataOverriddenError(list_, self)
 
@@ -57,10 +80,7 @@ class AbstractList(AbstractRepr, dict):
 
     def __getattr_iter__(self, attr):
         for value in self.itervalues():
-            try:
-                yield getattr(value, attr)
-            except AttributeError:
-                raise FieldNotFoundError(value, attr)
+            yield getattr(value, attr)
 
     def __getattr__(self, attr):
         return list(self.__getattr_iter__(attr))
