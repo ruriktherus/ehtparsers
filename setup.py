@@ -1,0 +1,11 @@
+#!/usr/bin/env python
+
+from distutils.core import setup
+
+setup(name='vlbidata',
+      version='1.0',
+      description='Python VLBI Management Utilities',
+      author='Rurik A. Primiani',
+      author_email='rprimian@cfa.harvard.edu',
+      packages=['vlbidata'],
+     )
