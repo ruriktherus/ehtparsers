@@ -5,6 +5,13 @@ class Error(Exception):
         Exception.__init__(self, msg.format(**kwargs))
 
 
+class AbstractTypeError(Error):
+
+    def __init__(self, object_name):
+        Error.__init__(self, "'{object_name}' does not support item assignment",
+                       object_name=object_name)
+
+
 class PivotError(Error):
 
     def __init__(self, msg, **kwargs):
@@ -74,10 +81,6 @@ class ConflictingValuesError(CannotMergeError):
 
 class DataOverriddenError(Error):
 
-    def __init__(self, input_list, output_list):
-        msg = """ {dict.name}:
-        Scan list has length {list_len} but resulting '{dict.name}'
-        has length {dict_len}. Scans have overlapping pivots and data may
-        have been lost!"""
-        Error.__init__(self, msg, list_len=len(input_list),
-                       dict_len=len(output_list), dict=output_list)
+    def __init__(self, scan, pivot):
+        Error.__init__(self, "scan '{scan}' would override another scan at {pivot}!",
+                       scan=scan, pivot=pivot)

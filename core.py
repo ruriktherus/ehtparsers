@@ -61,22 +61,22 @@ class AbstractScan(AbstractRepr, dict):
 
 class AbstractList(AbstractRepr, dict):
 
-    def __init__(self, list_):
-        dict.__init__(self, self._scancheck(list_))
+    def __init__(self, iter_, merge=False):
+        dict.__init__(self, self._scancheck(iter_, merge))
         AbstractRepr.__init__(self, repr_format="[{name}]")
-        if self.__len__() != len(list_):
-            raise DataOverriddenError(list_, self)
 
     def __iter__(self):
         for key in sorted(dict.keys(self)):
             yield key
 
     def __getitem__(self, key):
-        if isinstance(key, int):
-            pivot = self.keys()[key]
+        if isinstance(key, (int, slice)):
+            return self.values()[key]
         else:
-            pivot = key
-        return dict.__getitem__(self, pivot)
+            return dict.__getitem__(self, key)
+
+    def __setitem__(self, *args):
+        raise AbstractTypeError(self.name)
 
     def __getattr_iter__(self, attr):
         for value in self.itervalues():
@@ -85,23 +85,36 @@ class AbstractList(AbstractRepr, dict):
     def __getattr__(self, attr):
         return list(self.__getattr_iter__(attr))
 
-    def _scancheck(self, list_):
-        """ dict = inst._merge_list(list_)
+    def _scancheck(self, iter_, merge):
+        """ dict = inst._merge_list(iter_)
         This function produces a dictionary where the keys
         are the pivot variables and the values are the scan
         instances of the given list of scans."""
-        for index, entry in enumerate(list_):
+        for index, entry in enumerate(iter_):
             if index==0:
-                pivot = entry.pivot
+                self.pivot = entry.pivot
             if not isinstance(entry, AbstractScan):
                 raise ImproperScanError(index, entry)
             if not hasattr(entry, 'pivot'):
                 raise NoPivotError(index, entry)
             if not hasattr(entry, entry.pivot):
-                raise PivotNotFoundError(index, entry, pivot)
-            if entry.pivot != pivot:
-                raise InconsistentPivotError(index, entry, pivot)
-            yield entry[pivot], entry
+                raise PivotNotFoundError(index, entry, entry.pivot)
+            if entry.pivot != self.pivot:
+                raise InconsistentPivotError(index, entry, self.pivot)
+            pivot = entry[self.pivot]
+            if dict.has_key(self, pivot):
+                if merge:
+                    dict.__setitem__(self, pivot, self[pivot]+entry)
+                else:
+                    raise DataOverriddenError(entry, pivot)
+            else:
+                yield pivot, entry
+
+    def get(self, key, default=None):
+        try:
+            return self.__getitem__(key)
+        except:
+            return default
 
     def iterkeys(self):
         for key in self.__iter__():
@@ -129,3 +142,6 @@ class AbstractList(AbstractRepr, dict):
     def popitem(self):
         first = self.__iter__().next()
         return dict.pop(self, first)
+
+    def update(self, iter_, merge=True):
+        dict.update(self, self._scancheck(iter_, merge))
