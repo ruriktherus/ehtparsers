@@ -67,3 +67,24 @@ AFIELDS = (
 DEP_AFIELDS = (
     ('datetime', lambda F: datetime.strptime(str(F['year'])+F['timetag'], "%y%j-%H%M%S")),
     )
+
+
+class AList(AbstractList):
+
+    def __init__(self, filename, baseline, comment='*'):
+        self.comment = comment
+        self.filename = filename
+        self.baseline = baseline
+        self.repr_format = "** {name} of Experiment(s) {0.experiment_s} **"
+        AbstractList.__init__(self, self._parse_baseline(self.filename, self.baseline),
+                              merge=False, repr_format=self.repr_format)
+
+    def _parse_baseline(self, filename, baseline):
+        for row in reader(open(filename, 'r'), delimiter=' ', skipinitialspace=True):
+            if not row[0]==self.comment:
+                assert len(row)==len(AFIELDS)
+                scan = AbstractScan([(field, func(row.pop(0))) for field, func in AFIELDS],
+                                    pivot='datetime')
+                scan.update((field, func(scan)) for field, func in DEP_AFIELDS)
+                if scan.baseline==baseline:
+                    yield scan
