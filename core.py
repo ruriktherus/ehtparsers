@@ -42,6 +42,10 @@ class AbstractScan(AbstractRepr, dict):
     def __add__(self, other):
         return self.merge(other)
 
+    def _merge_scans(self, other):
+        return AbstractScan(dict(self, **other), pivot=self.pivot,
+                            repr_format=self.repr_format)
+
     def merge(self, other):
         """ inst.merge(other) -> new_inst
         Attempts to merge two scans that have the same
@@ -53,8 +57,7 @@ class AbstractScan(AbstractRepr, dict):
                 if dict.has_key(self, field) and \
                        dict.__getitem__(self, field) != value:
                     raise ConflictingValuesError(self, other, field)
-            return AbstractScan(dict(self, **other), pivot=self.pivot,
-                                repr_format=self.repr_format)
+            return self._merge_scans(other)
         else:
             raise DifferentScansError(self, other)
 
