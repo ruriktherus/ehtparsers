@@ -61,9 +61,9 @@ class AbstractScan(AbstractRepr, dict):
 
 class AbstractList(AbstractRepr, dict):
 
-    def __init__(self, iter_, merge=False):
+    def __init__(self, iter_, merge=False, repr_format="[{name}]"):
         dict.__init__(self, self._scancheck(iter_, merge))
-        AbstractRepr.__init__(self, repr_format="[{name}]")
+        AbstractRepr.__init__(self, repr_format=repr_format)
 
     def __iter__(self):
         for key in sorted(dict.keys(self)):
