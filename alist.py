@@ -69,6 +69,16 @@ DEP_AFIELDS = (
     )
 
 
+class AScan(AbstractScan):
+
+    def __init__(self, dict_):
+        self.repr_format = "< {source}/{baseline} @ {datetime} >"
+        AbstractScan.__init__(self, dict_, pivot='datetime', repr_format=self.repr_format)
+
+    def _merge_scans(self, other):
+        return AScan(dict(self, **other))
+
+
 class AList(AbstractList):
 
     def __init__(self, filename, baseline, comment='*'):
@@ -83,8 +93,7 @@ class AList(AbstractList):
         for row in reader(open(filename, 'r'), delimiter=' ', skipinitialspace=True):
             if not row[0]==self.comment:
                 assert len(row)==len(AFIELDS)
-                scan = AbstractScan([(field, func(row.pop(0))) for field, func in AFIELDS],
-                                    pivot='datetime')
+                scan = AScan((field, func(row.pop(0))) for field, func in AFIELDS)
                 scan.update((field, func(scan)) for field, func in DEP_AFIELDS)
                 if scan.baseline==baseline:
                     yield scan
