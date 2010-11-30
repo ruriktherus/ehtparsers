@@ -10,7 +10,7 @@ class AbstractRepr:
 
     def __repr__(self):
         repr_dict = dict(self.__dict__, **self)
-        return self.repr_format.format(**repr_dict)
+        return self.repr_format.format(self, **repr_dict)
 
 
 class AbstractScan(AbstractRepr, dict):
@@ -61,7 +61,7 @@ class AbstractScan(AbstractRepr, dict):
 
 class AbstractList(AbstractRepr, dict):
 
-    def __init__(self, iter_, merge=False, repr_format="[{name}]"):
+    def __init__(self, iter_, merge=False, repr_format="[{name}({0.length})]"):
         dict.__init__(self, self._scancheck(iter_, merge))
         AbstractRepr.__init__(self, repr_format=repr_format)
 
@@ -83,7 +83,10 @@ class AbstractList(AbstractRepr, dict):
             yield getattr(value, attr)
 
     def __getattr__(self, attr):
-        return list(self.__getattr_iter__(attr))
+        if attr=='length':
+            return dict.__len__(self)
+        else:
+            return list(self.__getattr_iter__(attr))
 
     def _scancheck(self, iter_, merge):
         """ dict = inst._merge_list(iter_)
