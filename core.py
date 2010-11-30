@@ -85,6 +85,10 @@ class AbstractList(AbstractRepr, dict):
     def __getattr__(self, attr):
         if attr=='length':
             return dict.__len__(self)
+        elif attr.endswith('_s'):
+            return set(self.__getattr__(attr.rstrip('_s')))
+        elif attr.endswith('_sl'):
+            return list(self.__getattr__(attr.rstrip('l')))
         else:
             return list(self.__getattr_iter__(attr))
 
