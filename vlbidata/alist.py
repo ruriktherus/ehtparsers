@@ -7,6 +7,13 @@ from datetime import datetime
 from core import AbstractScan, AbstractList
 
 
+__all__ = [
+    'AScan',
+    'AList',
+    ]
+    
+
+
 # Taken from Haystack's aformat.doc
 #       = ( (FIELD_NAME, TYPE_FUNC), 
 #           ...
