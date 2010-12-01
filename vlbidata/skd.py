@@ -7,11 +7,17 @@ from datetime import datetime
 from core import AbstractScan, AbstractList
 
 
-SCAN_RE = r"""scan\ (?P<scan>\w+);\n          # scan specifier
+__all__ = [
+    'SKDScan',
+    'SKDList',
+    ]
+
+
+SCAN_RE = r"""scan\ (?P<scan_spec>\w+);\n     # scan specifier
               \*.+\n\*\ +(?P<pant>[1-8]*)     # get the PA antenna
               (?P<conf>[dDfFwWaApP]*)         # get the configuration
               \(x\)(?P<comp>[0-9]).+\n        # get the comparison antenna
-               \ +start=(?P<time>\w+);        # start time
+              \ +start=(?P<time>\w+);         # start time
               \ mode=(?P<mode>\w+);           # freq. def used
               \ source=(?P<source>.+);\n      # source name
               (?:\*.+\n)?(?:^.+;\n){0,3}      # skips two (or three) lines
