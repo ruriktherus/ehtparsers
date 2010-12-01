@@ -1,62 +1,53 @@
 #!/usr/bin/env python
 
 
-import re
-import time
+from re import finditer, X, M
 from datetime import datetime
 
-
-TIME_FMT = '%Yy%jd%Hh%Mm%Ss'
+from core import AbstractScan, AbstractList
 
 
 SCAN_RE = r"""scan\ (?P<scan>\w+);\n          # scan specifier
               \*.+\n\*\ +(?P<pant>[1-8]*)     # get the PA antenna
               (?P<conf>[dDfFwWaApP]*)         # get the configuration
-              \(x\)(?P<comp>[0-9]).+\n             # get the comp. antenna
+              \(x\)(?P<comp>[0-9]).+\n        # get the comparison antenna
                \ +start=(?P<time>\w+);        # start time
               \ mode=(?P<mode>\w+);           # freq. def used
               \ source=(?P<source>.+);\n      # source name
-              (?:\*.+\n)?(?:^.+;\n){0,3}       # skips two (or three) lines
+              (?:\*.+\n)?(?:^.+;\n){0,3}      # skips two (or three) lines
               endscan;$"""
 
-def parse_skd(FILE, debug=False):
-    SCANS = []
-    STR = ''.join(FILE.readlines())
-    ITER = re.finditer(SCAN_RE, STR, re.X | re.M)
-    for match in ITER:
-        SCAN = match.groupdict()
-        SCAN['pant'] = [int(a) for a in SCAN['pant']]
-        SCAN['pants'] = len(SCAN['pant'])
-        SCAN['comp'] = int(SCAN['comp'][0])
-        SCAN['conf'] = list(SCAN['conf'].upper())
-        SCAN['datetime'] = datetime.strptime(SCAN['time'], TIME_FMT)
-        SCAN['time'] = time.asctime(\
-            time.strptime(SCAN['time'], TIME_FMT))
-        SCANS.append(SCAN)
-        if debug:
-            print "FOUND SCAN", SCAN['scan']
-            print "  PA ANT", SCAN['pant']
-            print "  COMP ANT", SCAN['comp']
-            print "  CONFIG", ''.join(SCAN['conf'])
-            print "  USING", SCAN['mode']
-            print "  AT", SCAN['time']
-            print "  ON SOURCE", SCAN['source']
-    if debug:
-        print "TOTAL: %d scans" %len(SCANS)
-    return SCANS
-    
 
-if __name__ == '__main__':
+DEP_SKDFIELDS = (
+    ('pants', lambda F: [int(a) for a in F['pant']]),     # List of phased antennas in the sum
+    ('total_pants', lambda F: len(F['pants'])),           # Total number of phased antennas
+    ('comparison', lambda F: int(F['comp'][0])),          # Comparison antenna (if recorded)
+    ('configuration', lambda F: list(F['conf'].upper())), # Phased array configuration
+    ('datetime', lambda F: datetime.strptime(F['time'], '%Yy%jd%Hh%Mm%Ss')),
+    )
 
-    import sys
 
-    if len(sys.argv) <> 2:
-        raise AttributeError, "No .skd file specified!"
-    elif not sys.argv[1].endswith('.skd'):
-        raise AttributeError, "File given is not .skd!"
-    else:
-        print "PARSING:", sys.argv[1]
+class SKDScan(AbstractScan):
 
-    FILE = open(sys.argv[1])
-    scans = parse_skd(FILE, debug=True)
+    def __init__(self, dict_):
+        self.repr_format = "< {source}({total_pants} pants) @ {datetime} >"
+        AbstractScan.__init__(self, dict_, pivot='datetime', repr_format=self.repr_format)
 
+    def _merge_scans(self, other):
+        return SKDScan(dict(self, **other))
+
+
+class SKDList(AbstractList):
+
+    def __init__(self, filename):
+        self.filename = filename
+        self.repr_format = "** {name} of {0.length} scans **"
+        AbstractList.__init__(self, self._parse_skd(self.filename), merge=False,
+                              repr_format=self.repr_format)
+
+    def _parse_skd(self, filename):
+        with open(filename, 'r') as file_:
+            for match in finditer(SCAN_RE, file_.read(), X|M):
+                scan = SKDScan(match.groupdict())
+                scan.update((field, func(scan)) for field, func in DEP_SKDFIELDS)
+                yield scan
