@@ -2,6 +2,13 @@
 from errors import *
 
 
+__all__ = [ 
+    'AbstractRepr',
+    'AbstractScan',
+    'AbstractList',
+    ]
+
+
 class AbstractRepr:
 
     def __init__(self, repr_format="<{name}>"):
@@ -16,6 +23,7 @@ class AbstractRepr:
 class AbstractScan(AbstractRepr, dict):
 
     def __init__(self, dict_, pivot, repr_format="<{name}>"):
+        print pivot
         self.pivot = pivot
         dict.__init__(self, dict_)
         AbstractRepr.__init__(self, repr_format=repr_format)
