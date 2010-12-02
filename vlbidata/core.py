@@ -1,4 +1,5 @@
 
+import logging
 from errors import *
 
 
@@ -12,7 +13,10 @@ __all__ = [
 class AbstractRepr:
 
     def __init__(self, repr_format="<{name}>"):
+        self.module = self.__module__
         self.name = self.__class__.__name__
+        self.log_name = '{module}.{name}'.format(**self.__dict__)
+        self.logger = logging.getLogger(self.log_name)
         self.repr_format = repr_format
 
     def __repr__(self):

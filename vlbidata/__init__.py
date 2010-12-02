@@ -1,9 +1,27 @@
+import logging
+
+
+class AbstractNullHandler(logging.Handler):
+    def emit(self, record):
+        pass
+
+
+logger = logging.getLogger(__name__)
+logger.addHandler(AbstractNullHandler())
+
+
 import core
 import errors
 
 import alist
 import skd
 
+import tsys
+
 from core import *
+from errors import *
+
 from alist import *
 from skd import *
+
+from tsys import *
