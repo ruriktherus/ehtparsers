@@ -56,3 +56,7 @@ class SMATsysList(AbstractList):
                         tsys = float(columns[-1])
                         dt = datetime.utcfromtimestamp(int(columns[0]))
                         yield SMATsysScan({'datetime': dt, 'tsys_sma%s'%antenna: tsys})
+
+    def _interpolate_scan(self, pivot):
+        closest = AbstractList._interpolate_scan(self, pivot)
+        return SMATsysScan(dict(closest, datetime=pivot))
