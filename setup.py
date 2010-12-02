@@ -7,5 +7,5 @@ setup(name='vlbidata',
       description='Python VLBI Management Utilities',
       author='Rurik A. Primiani',
       author_email='rprimian@cfa.harvard.edu',
-      packages=['vlbidata'],
+      packages=['vlbidata', 'vlbidata.tsys'],
      )
