@@ -122,6 +122,8 @@ class AbstractList(AbstractRepr, dict):
                 last_key = key
             elif abs(pivot-last_key) <= abs(pivot-key):
                 return self.__getitem__(last_key)
+            elif abs(pivot-last_key) > abs(pivot-key):
+                return self.__getitem__(key)
         return self.__getitem__(key)
 
     def _merge_lists(self, other):
