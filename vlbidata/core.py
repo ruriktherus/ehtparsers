@@ -121,7 +121,8 @@ class AbstractList(AbstractRepr, dict):
         return self.__getitem__(key)
 
     def _merge_lists(self, other):
-        return AbstractList(self[key]+other(key) for key in self)
+        return AbstractList([self[key]+other(key) for key in self],
+                            merge=False, repr_format=self.repr_format)
 
     def _scancheck(self, iter_, merge):
         """ dict = inst._merge_list(iter_)
