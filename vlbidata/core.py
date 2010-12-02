@@ -106,12 +106,22 @@ class AbstractList(AbstractRepr, dict):
         try:
             return self.__getitem__(approx)
         except KeyError:
-            for key in self.__iter__():
-                if key>approx:
-                    return self.__getitem__(key)
+            return self._interpolate_scan(approx)
 
     def __add__(self, other):
-        return AbstractList([self[key]+other(key) for key in self], merge=True)
+        return self._merge_lists(other)
+
+    def _interpolate_scan(self, pivot):
+        last_key = self.__iter__().next()
+        for key in self.__iter__():
+            if pivot>key and pivot>last_key:
+                last_key = key
+            elif abs(pivot-last_key) <= abs(pivot-key):
+                return self.__getitem__(last_key)
+        return self.__getitem__(key)
+
+    def _merge_lists(self, other):
+        return AbstractList(self[key]+other(key) for key in self)
 
     def _scancheck(self, iter_, merge):
         """ dict = inst._merge_list(iter_)
