@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 
 
-from re import compile
+from re import match, compile
 from datetime import datetime
 from warnings import warn_explicit
 
 from vlbidata.core import AbstractScan, AbstractList
-from vlbidata.errors import ConflictingValuesError
+from vlbidata.errors import FieldNotFoundError, ConflictingValuesError
 
 
 __all__ = [
@@ -23,6 +23,16 @@ class SMATsysScan(AbstractScan):
     def __init__(self, dict_):
         self.repr_format = "< {name} @ {datetime} >"
         AbstractScan.__init__(self, dict_, pivot='datetime', repr_format=self.repr_format)
+
+    def __getattr__(self, attr):
+        try:
+            return AbstractScan.__getattr__(self, attr)
+        except FieldNotFoundError:
+            if match('tsys_sma[0-9]+', str(attr)):
+                self.logger.warning("'%s' not found, returning None", attr)
+                return None
+            else:
+                raise FieldNotFoundError(self, attr)
 
     def _merge_scans(self, other):
         return SMATsysScan(dict(self, **other))
@@ -57,6 +67,27 @@ class SMATsysList(AbstractList):
                         dt = datetime.utcfromtimestamp(int(columns[0]))
                         yield SMATsysScan({'datetime': dt, 'tsys_sma%s'%antenna: tsys})
 
+    def _interpolate_attr(self, pivot, attr):
+        last_key = self.__iter__().next()
+        last_value = self[last_key]
+        for key, value in self.iteritems():
+            if value.__getattr__(attr):
+                if pivot>key and pivot>last_key:
+                    last_key = key
+                    last_value = value
+                elif abs(pivot-last_key) <= abs(pivot-key):
+                    closest = self.__getitem__(last_key)
+                    return SMATsysScan({'datetime': pivot, attr: closest[attr]})
+                elif abs(pivot-last_key) > abs(pivot-key):
+                    closest = self.__getitem__(key)
+                    return SMATsysScan({'datetime': pivot, attr: closest[attr]})
+        closest = self.__getitem__(key)
+        if closest.has_key(attr):
+            return SMATsysScan({'datetime': pivot, attr: closest[attr]})
+        else:
+            return SMATsysScan({'datetime': pivot, attr: None})
+
     def _interpolate_scan(self, pivot):
-        closest = AbstractList._interpolate_scan(self, pivot)
-        return SMATsysScan(dict(closest, datetime=pivot))
+        required = iter('tsys_sma%s'%a for a in range(1,9))
+        scans = [self._interpolate_attr(pivot, tsys) for tsys in required]
+        return sum(scans, SMATsysScan({'datetime': pivot}))

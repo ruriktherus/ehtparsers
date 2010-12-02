@@ -107,10 +107,7 @@ class AbstractList(AbstractRepr, dict):
             return list(self.__getattr_iter__(attr))
 
     def __call__(self, approx):
-        try:
-            return self.__getitem__(approx)
-        except KeyError:
-            return self._interpolate_scan(approx)
+        return self._interpolate_scan(approx)
 
     def __add__(self, other):
         return self._merge_lists(other)
