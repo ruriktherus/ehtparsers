@@ -19,9 +19,14 @@ class AbstractRepr:
         self.logger = logging.getLogger(self.log_name)
         self.repr_format = repr_format
 
-    def __repr__(self):
+    def __repr__(self, extra=None, quit=False):
         repr_dict = dict(self.__dict__, **self)
-        return self.repr_format.format(self, **repr_dict)
+        repr_dict[extra] = '$$$'
+        try:
+            return self.repr_format.format(self, **repr_dict)
+        except KeyError, e:
+            key = e.args[0]
+            return AbstractRepr.__repr__(self, extra=key, quit=True)
 
 
 class AbstractScan(AbstractRepr, dict):
@@ -103,6 +108,8 @@ class AbstractList(AbstractRepr, dict):
             return set(self.__getattr__(attr.rstrip('_s')))
         elif attr.endswith('_sl'):
             return list(self.__getattr__(attr.rstrip('l')))
+        elif attr.endswith('_sj'):
+            return '/'.join(self.__getattr__(attr.rstrip('j')))
         else:
             return list(self.__getattr_iter__(attr))
 
@@ -111,6 +118,19 @@ class AbstractList(AbstractRepr, dict):
 
     def __add__(self, other):
         return self._merge_lists(other)
+
+    def __filter__(self, scans=None, **conditions):
+        if scans==None:
+            scans = self.itervalues()
+        try:
+            field, condition = conditions.popitem()
+            scans = [scan for scan in self.itervalues() if scan[field]==condition]
+            return self.__filter__(scans, **conditions)
+        except KeyError:
+            return self._list_from_scans(scans)
+        
+    def _list_from_scans(self, scans):
+        return AbstractList(scans, merge=False, repr_format=self.repr_format)
 
     def _interpolate_scan(self, pivot):
         last_key = self.__iter__().next()
@@ -124,8 +144,7 @@ class AbstractList(AbstractRepr, dict):
         return self.__getitem__(key)
 
     def _merge_lists(self, other):
-        return AbstractList([self[key]+other(key) for key in self],
-                            merge=False, repr_format=self.repr_format)
+        return self._list_from_scans(self[key]+other(key) for key in self)
 
     def _scancheck(self, iter_, merge):
         """ dict = inst._merge_list(iter_)
