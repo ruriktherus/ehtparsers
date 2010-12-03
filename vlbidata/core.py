@@ -128,7 +128,7 @@ class AbstractList(AbstractRepr, dict):
         try:
             field, condition = conditions.popitem()
             scans = [scan for scan in self.itervalues() if scan[field]==condition]
-            return self.__filter__(scans, **conditions)
+            return self.__filter__(expression=None, scans=scans, **conditions)
         except KeyError:
             return self._list_from_scans(scans)
         
