@@ -10,6 +10,7 @@ from core import AbstractScan, AbstractList
 __all__ = [
     'SKDScan',
     'SKDList',
+    'parse_skd',
     ]
 
 
@@ -45,15 +46,21 @@ class SKDScan(AbstractScan):
 
 class SKDList(AbstractList):
 
-    def __init__(self, filename):
-        self.filename = filename
+    def __init__(self, iter_):
         self.repr_format = "** {name} of {0.length} scans **"
-        AbstractList.__init__(self, self._parse_skd(self.filename), merge=False,
-                              repr_format=self.repr_format)
+        AbstractList.__init__(self, iter_, merge=False, repr_format=self.repr_format)
 
-    def _parse_skd(self, filename):
-        with open(filename, 'r') as file_:
-            for match in finditer(SCAN_RE, file_.read(), X|M):
-                scan = SKDScan(match.groupdict())
-                scan.update((field, func(scan)) for field, func in DEP_SKDFIELDS)
-                yield scan
+    def _list_from_scans(self, iter_):
+        SKDList(iter_, merge=False, repr_format=self.repr_format)
+
+
+def parse_skdfile(filename):
+    with open(filename, 'r') as file_:
+        for match in finditer(SCAN_RE, file_.read(), X|M):
+            scan = SKDScan(match.groupdict())
+            scan.update((field, func(scan)) for field, func in DEP_SKDFIELDS)
+            yield scan
+
+
+def parse_skd(filename):
+    return SKDList(parse_skdfile(filename))

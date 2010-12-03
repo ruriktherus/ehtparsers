@@ -11,6 +11,7 @@ from vlbidata.errors import ConflictingValuesError
 __all__ = [
     'SMTOTsysScan',
     'SMTOTsysList',
+    'parse_smto',
     ]
 
 
@@ -41,22 +42,28 @@ class SMTOTsysScan(AbstractScan):
 
 class SMTOTsysList(AbstractList):
 
-    def __init__(self, filename, year):
-        self.filename = filename
+    def __init__(self, iter_):
         self.repr_format = "** {name} of {0.length} scans **"
-        AbstractList.__init__(self, self._parse_tsys(self.filename, year),
-                              merge=True, repr_format=self.repr_format)
+        AbstractList.__init__(self, iter_, merge=True, repr_format=self.repr_format)
 
-    def _parse_tsys(self, filename, year):
-        with open(filename, 'r') as file_:
-            for line in file_:
-                match = TSYS_RE.match(line)
-                if match:
-                    scan = SMTOTsysScan(match.groupdict())
-                    scan.update({'datetime': datetime.strptime(str(year)+scan['utctime'],
-                                                               '%Y%j:%H:%M')})
-                    yield scan
+    def _list_from_scans(self, iter_):
+        SMTOTsysList(iter_, merge=True, repr_format=self.repr_format)
 
     def _interpolate_scan(self, pivot):
         closest = AbstractList._interpolate_scan(self, pivot)
         return SMTOTsysScan(dict(closest, datetime=pivot))
+
+
+def parse_smtofile(filename, year):
+    with open(filename, 'r') as file_:
+        for line in file_:
+            match = TSYS_RE.match(line)
+            if match:
+                scan = SMTOTsysScan(match.groupdict())
+                dt = datetime.strptime(str(year)+scan['utctime'], '%Y%j:%H:%M')
+                scan.update({'datetime': dt})
+                yield scan
+
+
+def parse_smto(filename, year):
+    return SMTOTsysList(parse_smtofile(filename, year))

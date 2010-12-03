@@ -12,6 +12,7 @@ from vlbidata.errors import FieldNotFoundError, ConflictingValuesError
 __all__ = [
     'SMATsysScan',
     'SMATsysList',
+    'parse_sma',
     ]
 
 
@@ -47,25 +48,12 @@ class SMATsysScan(AbstractScan):
 
 class SMATsysList(AbstractList):
 
-    def __init__(self, filename):
-        self.filename = filename
+    def __init__(self, iter_):
         self.repr_format = "** {name} of {0.length} scans **"
-        AbstractList.__init__(self, self._parse_tsys(self.filename), merge=True,
-                              repr_format=self.repr_format)
+        AbstractList.__init__(self, iter_, merge=True, repr_format=self.repr_format)
 
-    def _parse_tsys(self, filename):
-        with open(filename, 'r') as file_:
-            for line in file_:
-                if line.startswith('#'):
-                    match = ACC_RE.match(line)
-                    if match:
-                        antenna = match.groupdict()['ant']
-                else:
-                    columns = line.split()
-                    if columns:
-                        tsys = float(columns[-1])
-                        dt = datetime.utcfromtimestamp(int(columns[0]))
-                        yield SMATsysScan({'datetime': dt, 'tsys_sma%s'%antenna: tsys})
+    def _list_from_scans(self, iter_):
+        SMATsysList(iter_, merge=True, repr_format=self.repr_format)
 
     def _interpolate_attr(self, pivot, attr):
         last_key = self.__iter__().next()
@@ -91,3 +79,22 @@ class SMATsysList(AbstractList):
         required = iter('tsys_sma%s'%a for a in range(1,9))
         scans = [self._interpolate_attr(pivot, tsys) for tsys in required]
         return sum(scans, SMATsysScan({'datetime': pivot}))
+
+
+def parse_smafile(filename):
+    with open(filename, 'r') as file_:
+        for line in file_:
+            if line.startswith('#'):
+                match = ACC_RE.match(line)
+                if match:
+                    antenna = match.groupdict()['ant']
+            else:
+                columns = line.split()
+                if columns:
+                    tsys = float(columns[-1])
+                    dt = datetime.utcfromtimestamp(int(columns[0]))
+                    yield SMATsysScan({'datetime': dt, 'tsys_sma%s'%antenna: tsys})
+
+
+def parse_sma(filename):
+    return SMATsysList(parse_smafile(filename))

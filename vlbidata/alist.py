@@ -10,6 +10,7 @@ from core import AbstractScan, AbstractList
 __all__ = [
     'AScan',
     'AList',
+    'parse_alist',
     ]
     
 
@@ -88,19 +89,24 @@ class AScan(AbstractScan):
 
 class AList(AbstractList):
 
-    def __init__(self, filename, baseline, comment='*'):
-        self.comment = comment
-        self.filename = filename
+    def __init__(self, iter_, baseline):
         self.baseline = baseline
-        self.repr_format = "** {name} of Experiment(s) {0.experiment_s} **"
-        AbstractList.__init__(self, self._parse_baseline(self.filename, self.baseline),
-                              merge=False, repr_format=self.repr_format)
+        self.repr_format = "** {name}: {0.length} scans, {baseline}, {0.source_sj} **"
+        AbstractList.__init__(self, iter_, merge=False, repr_format=self.repr_format)
 
-    def _parse_baseline(self, filename, baseline):
-        for row in reader(open(filename, 'r'), delimiter=' ', skipinitialspace=True):
-            if not row[0]==self.comment:
-                assert len(row)==len(AFIELDS)
-                scan = AScan((field, func(row.pop(0))) for field, func in AFIELDS)
-                scan.update((field, func(scan)) for field, func in DEP_AFIELDS)
-                if scan.baseline==baseline:
-                    yield scan
+    def _list_from_scans(self, iter_):
+        return AList(iter_, baseline=self.baseline)
+
+
+def parse_baseline(filename, baseline, comment):
+    for row in reader(open(filename, 'r'), delimiter=' ', skipinitialspace=True):
+        if not row[0]==comment:
+            assert len(row)==len(AFIELDS)
+            scan = AScan((field, func(row.pop(0))) for field, func in AFIELDS)
+            scan.update((field, func(scan)) for field, func in DEP_AFIELDS)
+            if scan.baseline==baseline:
+                yield scan
+
+
+def parse_alist(filename, baseline, comment='*'):
+    return AList(parse_baseline(filename, baseline, comment), baseline=baseline)
