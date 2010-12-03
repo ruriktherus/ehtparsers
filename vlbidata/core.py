@@ -119,9 +119,12 @@ class AbstractList(AbstractRepr, dict):
     def __add__(self, other):
         return self._merge_lists(other)
 
-    def __filter__(self, scans=None, **conditions):
+    def __filter__(self, expression=None, scans=None, **conditions):
         if scans==None:
             scans = self.itervalues()
+        if expression:
+            scans = [scan for scan in self.itervalues() if eval(expression, dict(scan))]
+            return self._list_from_scans(scans)
         try:
             field, condition = conditions.popitem()
             scans = [scan for scan in self.itervalues() if scan[field]==condition]
