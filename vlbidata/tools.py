@@ -31,7 +31,7 @@ def process_day(day, baseline, year=datetime.now().year, rootdir='/data'):
     all = vlbidata.parse_alist(path.join(datadir, 'pa.alist'), baseline)
     sys.stdout.write('done!\r\nParsing schedule file (to extract phased array configuration... ')
     sys.stdout.flush()
-    skd = vlbidata.parse_skd(path.join(datadir, 'pa.skd'))
+    skd = vlbidata.parse_skd(path.join(datadir, 'pa.skd'), ignore_pants='38')
     sys.stdout.write('done!\r\nParsing SMA and SMTO Tsys files (this may take a while)... ')
     sys.stdout.flush()
     sma = vlbidata.parse_sma(path.join(datadir, 'sma.tsys'))

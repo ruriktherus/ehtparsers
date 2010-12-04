@@ -26,7 +26,7 @@ SCAN_RE = r"""scan\ (?P<scan_spec>\w+);\n     # scan specifier
 
 
 DEP_SKDFIELDS = (
-    ('pants', lambda F: [int(a) for a in F['pant']]),     # List of phased antennas in the sum
+    ('pants', lambda F: [int(a) for a in F['pant'] if a not in F['ignore']]),
     ('total_pants', lambda F: len(F['pants'])),           # Total number of phased antennas
     ('comparison', lambda F: int(F['comp'][0])),          # Comparison antenna (if recorded)
     ('configuration', lambda F: list(F['conf'].upper())), # Phased array configuration
@@ -54,13 +54,14 @@ class SKDList(AbstractList):
         SKDList(iter_, merge=False, repr_format=self.repr_format)
 
 
-def parse_skdfile(filename):
+def parse_skdfile(filename, ignore_pants):
     with open(filename, 'r') as file_:
         for match in finditer(SCAN_RE, file_.read(), X|M):
             scan = SKDScan(match.groupdict())
+            scan['ignore'] = ignore_pants
             scan.update((field, func(scan)) for field, func in DEP_SKDFIELDS)
             yield scan
 
 
-def parse_skd(filename):
-    return SKDList(parse_skdfile(filename))
+def parse_skd(filename, ignore_pants=''):
+    return SKDList(parse_skdfile(filename, ignore_pants=ignore_pants))
