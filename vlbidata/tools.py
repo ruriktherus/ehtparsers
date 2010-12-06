@@ -23,7 +23,7 @@ def filter(list_, expression=None, **conditions):
     return list_.__filter__(expression=expression, **conditions)
 
 
-def process_day(day, baseline, year=datetime.now().year, rootdir='/data'):
+def process_day(day, baseline, year=datetime.now().year, rootdir='/data', **kwargs):
     datadir = path.join(rootdir, '{0}-{1:0>3}'.format(year, day))
     print 'Will check in %s/ for scan lists...'% datadir
     sys.stdout.write('Parsing alist... ')
@@ -44,7 +44,7 @@ def process_day(day, baseline, year=datetime.now().year, rootdir='/data'):
     calc_calibrated_flux(final)
     sys.stdout.write('done!\r\n')
     sys.stdout.flush()
-    return final
+    return filter(final, **kwargs)
 
 
 def calc_phringes_sefd(list_):
