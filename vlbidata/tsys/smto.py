@@ -47,7 +47,7 @@ class SMTOTsysList(AbstractList):
         AbstractList.__init__(self, iter_, merge=True, repr_format=self.repr_format)
 
     def _list_from_scans(self, iter_):
-        SMTOTsysList(iter_, merge=True, repr_format=self.repr_format)
+        return SMTOTsysList(iter_)
 
     def _interpolate_scan(self, pivot):
         closest = AbstractList._interpolate_scan(self, pivot)

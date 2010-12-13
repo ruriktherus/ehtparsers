@@ -53,7 +53,7 @@ class SMATsysList(AbstractList):
         AbstractList.__init__(self, iter_, merge=True, repr_format=self.repr_format)
 
     def _list_from_scans(self, iter_):
-        SMATsysList(iter_, merge=True, repr_format=self.repr_format)
+        return SMATsysList(iter_)
 
     def _interpolate_attr(self, pivot, attr):
         last_key = self.__iter__().next()
