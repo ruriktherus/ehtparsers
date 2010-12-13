@@ -4,7 +4,6 @@ import logging
 import os.path as path
 
 from math import sqrt
-from csv import DictWriter
 from datetime import datetime
 
 import vlbidata
@@ -74,8 +73,16 @@ def calc_calibrated_flux(list_):
         scan['cal_flux'] = scan.amp * sqrt(other_sefd*hawaii_sefd) / 10000.
 
 
-def print_table(list_, output_filename, keys=None, **kwargs):
+def print_table(list_, output_filename, keys=None,
+                header=None, column_width=15, **kwargs):
     if keys==None:
         keys = list_[0].iterkeys()
-    writer = DictWriter(open(output_filename, 'w'), keys, extrasaction='ignore', **kwargs)
-    writer.writerows(list_.itervalues())
+    if header==None:
+        header = keys
+    header_fmt = ''.join('{{{key}:<{column_width}}} ' \
+                         .format(key=key, column_width=column_width) \
+                         for key in range(len(header)))
+    with open(output_filename, 'w') as file_:
+        file_.write(header_fmt.format(*header) + '\n')
+        for scan in list_.itervalues():
+            file_.write(header_fmt.format(*list(scan[field] for field in keys)) + '\n')
