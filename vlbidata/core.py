@@ -1,6 +1,7 @@
 
 import logging
 from errors import *
+from datetime import datetime, date, time
 
 
 __all__ = [ 
@@ -8,6 +9,13 @@ __all__ = [
     'AbstractScan',
     'AbstractList',
     ]
+
+
+SAFE = {
+    'datetime': datetime,
+    'date': date,
+    'time': time
+    }
 
 
 class AbstractRepr:
@@ -123,7 +131,8 @@ class AbstractList(AbstractRepr, dict):
         if scans==None:
             scans = self.itervalues()
         if expression:
-            scans = [scan for scan in self.itervalues() if eval(expression, dict(scan))]
+            expr = lambda scan: eval(expression, dict(__builtins__=SAFE, **scan), {})
+            scans = [scan for scan in self.itervalues() if expr(scan)]
             return self._list_from_scans(scans)
         try:
             field, condition = conditions.popitem()
