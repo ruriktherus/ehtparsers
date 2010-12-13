@@ -1,7 +1,7 @@
 
 import logging
 from errors import *
-from datetime import datetime, date, time
+from datetime import date, time
 
 
 __all__ = [ 
@@ -12,7 +12,6 @@ __all__ = [
 
 
 SAFE = {
-    'datetime': datetime,
     'date': date,
     'time': time
     }
@@ -97,8 +96,10 @@ class AbstractList(AbstractRepr, dict):
             yield key
 
     def __getitem__(self, key):
-        if isinstance(key, (int, slice)):
+        if isinstance(key, int):
             return self.values()[key]
+        elif isinstance(key, slice):
+            return self._list_from_scans(self.values()[key])
         else:
             return dict.__getitem__(self, key)
 
@@ -131,7 +132,7 @@ class AbstractList(AbstractRepr, dict):
         if scans==None:
             scans = self.itervalues()
         if expression:
-            expr = lambda scan: eval(expression, dict(__builtins__=SAFE, **scan), {})
+            expr = lambda scan: eval(expression, dict(__builtins__=SAFE, **scan))
             scans = [scan for scan in self.itervalues() if expr(scan)]
             return self._list_from_scans(scans)
         try:
