@@ -2,7 +2,7 @@
 
 
 from re import finditer, X, M
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from core import AbstractScan, AbstractList
 
@@ -21,7 +21,9 @@ SCAN_RE = r"""scan\ (?P<scan_spec>\w+);\n     # scan specifier
               \ +start=(?P<time>\w+);         # start time
               \ mode=(?P<mode>\w+);           # freq. def used
               \ source=(?P<source>.+);\n      # source name
-              (?:\*.+\n)?(?:^.+;\n){0,3}      # skips two (or three) lines
+              (?:\*.+\n)?                     # skip comment (if present)
+              \ +station=(?P<station>.+);\n   # grab the first station line
+              (?:^.+;\n)+?                    # skip the rest
               endscan;$"""
 
 
@@ -31,6 +33,7 @@ DEP_SKDFIELDS = (
     ('total_pants', lambda F: len(F['pants'])),           # Total number of phased antennas
     ('comparison', lambda F: int(F['comp'][0])),          # Comparison antenna (if recorded)
     ('configuration', lambda F: list(F['conf'].upper())), # Phased array configuration
+    ('duration', lambda F: timedelta(seconds=int(F['station'].split(':')[2].rstrip('sec')))),
     ('datetime', lambda F: datetime.strptime(F['time'], '%Yy%jd%Hh%Mm%Ss')),
     ('time', lambda F: datetime.strftime(F['datetime'], '%H:%M:%S')),
     )
