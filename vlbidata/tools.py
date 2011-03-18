@@ -30,14 +30,20 @@ def process_day(day, baseline, year=datetime.now().year, rootdir='/data', **kwar
     all = vlbidata.parse_alist(path.join(datadir, 'pa.alist'), baseline)
     sys.stdout.write('done!\r\nParsing schedule file (to extract phased array configuration... ')
     sys.stdout.flush()
-    skd = vlbidata.parse_skd(path.join(datadir, 'pa.skd'), ignore_pants='38')
+    skd = vlbidata.parse_skd(path.join(datadir, 'pa.skd'))
     sys.stdout.write('done!\r\nParsing SMA and SMTO Tsys files (this may take a while)... ')
     sys.stdout.flush()
     sma = vlbidata.parse_sma(path.join(datadir, 'sma.tsys'))
-    smto = vlbidata.parse_smto(path.join(datadir, 'smto.tsys'), year)
+    try:
+        smto = vlbidata.parse_smto(path.join(datadir, 'smto.tsys'), year)
+    except IOError: # SMTO was not present
+        smto = None
     sys.stdout.write('done!\r\nMerging into single AList (will take even longer)... ')
     sys.stdout.flush()
-    final = all + skd + sma + smto
+    if smto:
+        final = all + skd + sma + smto
+    else:
+        final = all + skd + sma
     sys.stdout.write('done!\r\nCalibrating local amplitudes by system temperatures...')
     sys.stdout.flush()
     calc_calibrated_flux(final)
@@ -49,7 +55,9 @@ def process_day(day, baseline, year=datetime.now().year, rootdir='/data', **kwar
 def calc_phringes_sefd(list_):
     for scan in list_.itervalues():
         sma_dish_gain = 130. #Jy/K
+        tsys = 1./sum(1./(scan['tsys_sma{0}'.format(pant)]) for pant in scan.pants)
         sefd = 1./sum(1./(2*sma_dish_gain*scan['tsys_sma{0}'.format(pant)]) for pant in scan.pants)
+        scan['phringes_tsys'] = tsys
         scan['phringes_sefd'] = sefd
 
 
@@ -60,7 +68,10 @@ def calc_calibrated_flux(list_):
         smto_dish_gain = 50. #Jy/K
         phringes_sefd = scan['phringes_sefd']
         comp_sefd = 2*sma_dish_gain*scan['tsys_sma{0}'.format(scan.comp)]
-        smto_sefd = 2*smto_dish_gain*int(scan['tsys_smto2'])
+        try:
+            smto_sefd = 2*smto_dish_gain*int(scan['tsys_smto2'])
+        except KeyError: # SMTO was not present
+            smto_sefd = None
         if scan.baseline == 'PZ':
             hawaii_sefd = phringes_sefd
             other_sefd = comp_sefd
