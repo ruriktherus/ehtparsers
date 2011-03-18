@@ -36,6 +36,7 @@ def main():
     # Expose useful commands
     ip.expose_magic('day', day)
     ip.expose_magic('only', only)
+    ip.expose_magic('tabular', tabular)
 
     
 # some config helper functions you can use 
@@ -46,6 +47,11 @@ def day(self, arg):
 def only(self, arg):
     ip = self.api
     ip.ex("final = filter(all, \"%s\")" % arg)
+
+def tabular(self, arg):
+    ip = self.api
+    keys = ', '.join("'%s'" % a for a in arg.split())
+    ip.ex("print_table(all, 'out.txt', keys=[%s])" % keys)
 
 
 main()
