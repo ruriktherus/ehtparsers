@@ -2,7 +2,7 @@
 
 
 from csv import reader
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from core import AbstractScan, AbstractList
 
@@ -74,6 +74,7 @@ AFIELDS = (
 #              )
 DEP_AFIELDS = (
     ('datetime', lambda F: datetime.strptime(str(F['year'])+F['timetag'], "%y%j-%H%M%S")),
+    ('duration', lambda F: timedelta(seconds=F['duration'])),
     )
 
 
