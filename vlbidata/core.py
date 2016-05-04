@@ -3,6 +3,8 @@ import logging
 from errors import *
 from datetime import date, time
 
+from numpy import array
+
 
 __all__ = [ 
     'AbstractRepr',
@@ -120,7 +122,7 @@ class AbstractList(AbstractRepr, dict):
         elif attr.endswith('_sj'):
             return '/'.join(self.__getattr__(attr.rstrip('j')))
         else:
-            return list(self.__getattr_iter__(attr))
+            return array(list(self.__getattr_iter__(attr)))
 
     def __call__(self, approx):
         return self._interpolate_scan(approx)
