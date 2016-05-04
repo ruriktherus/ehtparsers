@@ -15,9 +15,6 @@ __all__ = [
 
 
 SCAN_RE = r"""scan\ (?P<scan_spec>\w+);[\r\n]+     # scan specifier
-              \*.+[\r\n]+\*\ +(?P<pant>[1-8]*)     # get the PA antenna
-              (?P<conf>[dDfFwWaApP]*)              # get the configuration
-              \(x\)(?P<comp>[0-9]).*[\r\n]+        # get the comparison antenna
               \ +start=(?P<time>\w+);              # start time
               \ mode=(?P<mode>\w+);                # freq. def used
               \ source=(?P<source>.*);[\r\n]+      # source name
@@ -28,11 +25,6 @@ SCAN_RE = r"""scan\ (?P<scan_spec>\w+);[\r\n]+     # scan specifier
 
 
 DEP_SKDFIELDS = (
-    ('pant', lambda F: ''.join(a for a in F['pant'] if a not in F['ignore'])),
-    ('pants', lambda F: [int(a) for a in F['pant']]),
-    ('total_pants', lambda F: len(F['pants'])),           # Total number of phased antennas
-    ('comparison', lambda F: int(F['comp'][0])),          # Comparison antenna (if recorded)
-    ('configuration', lambda F: list(F['conf'].upper())), # Phased array configuration
     ('duration', lambda F: timedelta(seconds=int(F['station'].split(':')[2].rstrip('sec')))),
     ('datetime', lambda F: datetime.strptime(F['time'], '%Yy%jd%Hh%Mm%Ss')),
     ('time', lambda F: datetime.strftime(F['datetime'], '%H:%M:%S')),
@@ -42,7 +34,7 @@ DEP_SKDFIELDS = (
 class SKDScan(AbstractScan):
 
     def __init__(self, dict_):
-        self.repr_format = "< {source}({total_pants} pants) @ {datetime} >"
+        self.repr_format = "< {source} @ {datetime} >"
         AbstractScan.__init__(self, dict_, pivot='datetime', repr_format=self.repr_format)
 
     def _merge_scans(self, other):
@@ -59,14 +51,13 @@ class SKDList(AbstractList):
         return SKDList(iter_)
 
 
-def parse_skdfile(filename, ignore_pants):
+def parse_skdfile(filename):
     with open(filename, 'r') as file_:
         for match in finditer(SCAN_RE, file_.read(), X|M):
             scan = SKDScan(match.groupdict())
-            scan['ignore'] = ignore_pants
             scan.update((field, func(scan)) for field, func in DEP_SKDFIELDS)
             yield scan
 
 
-def parse_skd(filename, ignore_pants=''):
-    return SKDList(parse_skdfile(filename, ignore_pants=ignore_pants))
+def parse_skd(filename):
+    return SKDList(parse_skdfile(filename))
