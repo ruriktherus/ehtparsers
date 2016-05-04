@@ -25,5 +25,6 @@ from errors import *
 
 from alist import *
 from skd import *
+from swarmcal import *
 
 from tsys import *
