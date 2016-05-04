@@ -29,6 +29,7 @@ DEP_SKDFIELDS = (
     ('duration', lambda F: timedelta(seconds=int(F['station'].split(':')[2].rstrip('sec')))),
     ('datetime', lambda F: datetime.strptime(F['time'], '%Yy%jd%Hh%Mm%Ss')),
     ('time', lambda F: datetime.strftime(F['datetime'], '%H:%M:%S')),
+    ('n', lambda F: int(F['scan_spec'][2:])),
     )
 
 
