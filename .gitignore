@@ -1,3 +1,4 @@
+*.pyc
 *.skd
 *.alist
 *.tsys
