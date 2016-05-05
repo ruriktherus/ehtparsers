@@ -1,4 +1,5 @@
 *.pyc
 *.skd
+*.vex
 *.alist
 *.tsys
