@@ -16,6 +16,9 @@ __all__ = [
 
 SCAN_RE = r"""scan\ (?P<scan_spec>\w+);[\r\n]+     # scan specifier
               (?:\*.+[\r\n]+)?                     # skip comment (if present)
+              ((?:\*.+)                            #
+               (?P<pol>[LR]pol)                    # get pol. state (if present)
+               (?:[\r\n]+))?                       #
               \ +start=(?P<time>\w+);              # start time
               \ mode=(?P<mode>\w+);                # freq. def used
               \ source=(?P<source>.*);[\r\n]+      # source name
